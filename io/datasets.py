@@ -25,6 +25,16 @@ class CMUBookDataset:
             self.genre_map[genre] = genre_id
             genre_id += 1
 
+    def iter_entries(self, keys=('summary', 'genres'), genre_as_ids=True):
+        for book_entry in self.dataset.itervalues():
+            entry_tup = list()
+            for k in keys:
+                if k == 'genres' and genre_as_ids:
+                    entry_tup.append(self.genres_to_ids(book_entry[k]))
+                else:
+                    entry_tup.append(book_entry[k])
+            yield tuple(entry_tup)
+
     def all_summaries(self):
         """
         Generator for obtaining all summaries in no particular order.
@@ -43,6 +53,9 @@ class CMUBookDataset:
         genre_set = set()
 
         for entry in self.dataset.itervalues():
+            if entry['genres'] is None:
+                continue
+
             for genre in entry['genres']:
                 genre_set.add(genre)
 
@@ -61,13 +74,20 @@ class CMUBookDataset:
             return genres
 
         # Fetch ids for each genre and return.
-        ids = list()
-        for genre in genres:
-            ids.append(self.genre_map[genre])
-        return ids
+        return self.genres_to_ids(genres)
 
     def get_genre_by_id(self, genre_id):
         return self.genre_map[genre_id]
+
+    def genres_to_ids(self, genres):
+        if genres is None:
+            return None
+
+        ids = list()
+        for genre in genres:
+            ids.append(self.genre_map[genre])
+
+        return ids
 
     def get_summary_by_id(self, wiki_id):
         return self.dataset[wiki_id]['summary']
@@ -92,7 +112,6 @@ class CMUBookDataset:
             summary=components[6].strip()
         )
 
-
     @staticmethod
     def process_genres(genre_string):
         if len(genre_string.strip()) == 0:
@@ -102,4 +121,6 @@ class CMUBookDataset:
 
 if __name__ == '__main__':
     ds = CMUBookDataset()
-    print ds.get_summary_by_title('ClockWork or')
+    for t, d, gs in ds.iter_entries(keys=('title','publication_date', 'genres'), genre_as_ids=True):
+        print t, d, gs
+        break
