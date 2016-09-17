@@ -59,8 +59,14 @@ def visualize_chi2(summaries, genres, n_gram=(1, 3)):
     """
     vectorizer = TfidfVectorizer(ngram_range=n_gram, lowercase=True,
                                  norm=None, smooth_idf=True, sublinear_tf=True)
-    X_train = vectorizer.fit_transform(summaries)
-    chi2score = chi2(X_train, genres)[0]
+    new_summaries = []
+    new_genres = []
+    for (summary, genre) in (summaries, genres):
+        for sentence in summary.split('.'):
+            new_summaries.append(sentence)
+            new_genres.append(genre)
+    X_train = vectorizer.fit_transform(new_summaries)
+    chi2score = chi2(X_train, new_genres)[0]
     figure(figsize=(6, 6))
     wscores = zip(vectorizer.get_feature_names(), chi2score)
     wchi2 = sorted(wscores, key=lambda x: x[1])
@@ -71,7 +77,7 @@ def visualize_chi2(summaries, genres, n_gram=(1, 3)):
     plot(topchi2[1], x, '-o', markersize=2, alpha=.8, color='g')
     yticks(x, labels)
     xlabel('$\chi^2$')
-    ylabel('Top disriminative features')
+    ylabel('Top discriminative features')
     show()
 
 
