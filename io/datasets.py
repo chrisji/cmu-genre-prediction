@@ -5,7 +5,7 @@ class CMUBookDataset:
     """
     Wrapper for the CMU Book Dataset, providing convenient functions for data access.
     """
-    def __init__(self):
+    def __init__(self, exclude_empty_genre=False):
         self.dataset = dict()
         self.genre_map = dict()
 
@@ -13,7 +13,17 @@ class CMUBookDataset:
         with open('../data/booksummaries.txt', 'r') as fp:
             for line in fp.readlines():
                 entry = CMUBookDataset.process_book_entry(line)
+
+                # Skip book if requested to exclude empty genre
+                if entry['genres'] is None and exclude_empty_genre:
+                    continue
+
                 self.dataset[entry['wiki_id']] = entry  # Add book entry using wiki_id as the key.
+
+        genre_id = 0
+        for genre in sorted(list(self.all_genres())):
+            self.genre_map[genre] = genre_id
+            genre_id += 1
 
     def all_summaries(self):
         """
@@ -44,14 +54,20 @@ class CMUBookDataset:
 
         :param wiki_id: book id to retrive genre list for
         :param id_form: False to return genre strings, True to return genre integer ids
-        :return:
+        :return: a list of genres
         """
-        if id_form:
-            ids = list()
-            for genre in self.dataset[wiki_id]['genres']:
-                ids.append(self.genre_map[genre])
-            return ids
-        return self.dataset[wiki_id]['genres']
+        genres = self.dataset[wiki_id]['genres']
+        if not id_form or genres is None:
+            return genres
+
+        # Fetch ids for each genre and return.
+        ids = list()
+        for genre in genres:
+            ids.append(self.genre_map[genre])
+        return ids
+
+    def get_genre_by_id(self, genre_id):
+        return self.genre_map[genre_id]
 
     def get_summary_by_id(self, wiki_id):
         return self.dataset[wiki_id]['summary']
@@ -75,6 +91,7 @@ class CMUBookDataset:
             genres=CMUBookDataset.process_genres(components[5]),
             summary=components[6].strip()
         )
+
 
     @staticmethod
     def process_genres(genre_string):
