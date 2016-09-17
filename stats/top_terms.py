@@ -7,6 +7,7 @@ from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.decomposition import NMF, LatentDirichletAllocation
 
 
+
 def nmf_topics(summary, n_topics=2, n_top_words=10, n_gram=(1, 3)):
     """
     Use NMF to extract the topics from a summary (uses tf-idf)
@@ -49,12 +50,13 @@ def lda_topics(summary, n_topics=2, n_top_words=10, n_gram=(1, 3)):
     print_top_words(lda, tf_feature_names, n_top_words)
 
 
-def visualize_chi2(summaries, genres, n_gram=(1, 3)):
+def visualize_chi2(summaries, genres, n_gram=(1, 3), top_features=20):
     """
     Visualize the most discriminative features for each genre
     :param summaries:
     :param genres:
     :param n_gram:
+    :param top_features:
     :return:
     """
     vectorizer = TfidfVectorizer(ngram_range=n_gram, lowercase=True,
@@ -70,7 +72,7 @@ def visualize_chi2(summaries, genres, n_gram=(1, 3)):
     figure(figsize=(6, 6))
     wscores = zip(vectorizer.get_feature_names(), chi2score)
     wchi2 = sorted(wscores, key=lambda x: x[1])
-    topchi2 = zip(*wchi2[-20:])
+    topchi2 = zip(*wchi2[-top_features:])
     x = range(len(topchi2[1]))
     labels = topchi2[0]
     barh(x, topchi2[1], align='center', alpha=.2, color='g')
@@ -94,3 +96,7 @@ def print_top_words(model, feature_names, n_top_words):
         print(" ".join([feature_names[i]
                         for i in topic.argsort()[:-n_top_words - 1:-1]]))
     print()
+
+if __name__ == '__main__':
+    ds = CMUBookDataset()
+    print ds.get_summary_by_title('ClockWork or')
